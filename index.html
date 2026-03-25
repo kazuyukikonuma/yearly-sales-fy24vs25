@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>學習商品 銷售分析 FY24 vs FY25</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Noto+Sans+TC:wght@400;500;700;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f4f5f7;--white:#fff;--border:#e3e6eb;--border2:#c9d0da;
+  --text:#1a1d24;--sub:#475569;--muted:#94a3b8;
+  --accent:#1e40af;--acc-lt:#eff6ff;
+  --red:#dc2626;--red-lt:#fef2f2;
+  --green:#15803d;--green-lt:#f0fdf4;
+  --orange:#c2410c;--orange-lt:#fff7ed;
+  --fy24:#6366f1;--fy25:#f43f5e;
+  /* FY24月カラー（薄→濃、4月〜3月） */
+  --fy24-q1:#a5b4fc;--fy24-q2:#818cf8;--fy24-q3:#6366f1;--fy24-q4:#4338ca;
+  /* FY25月カラー */
+  --fy25-q1:#fda4af;--fy25-q2:#fb7185;--fy25-q3:#f43f5e;--fy25-q4:#e11d48;
+  --tel:#1e40af;--kol:#0ea5e9;--web:#14b8a6;--ec:#f97316;--wab:#8b5cf6;--other:#9ca3af;
+  --r:10px;--sh:0 1px 3px rgba(0,0,0,.07),0 4px 12px rgba(0,0,0,.04);
+}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans JP','Noto Sans TC',sans-serif;font-size:14px;line-height:1.6}
+.wrap{max-width:1340px;margin:0 auto;padding:22px 28px 56px}
+
+/* LANG TOGGLE */
+.lang-bar{display:flex;justify-content:flex-end;margin-bottom:14px;gap:6px}
+.lang-btn{padding:4px 14px;border:1px solid var(--border2);border-radius:20px;background:var(--white);
+  font-size:11px;font-weight:700;cursor:pointer;color:var(--sub);font-family:inherit;transition:all .15s}
+.lang-btn.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* HEADER */
+.hdr{display:flex;align-items:flex-end;justify-content:space-between;padding-bottom:16px;
+  border-bottom:2px solid var(--text);margin-bottom:20px}
+.hdr-brand{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.hdr-title{font-size:23px;font-weight:900;letter-spacing:-.02em}
+.hdr-title span{color:var(--accent)}
+.hdr-r{text-align:right}
+.hdr-period{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted)}
+.hdr-total{font-family:'DM Mono',monospace;font-size:25px;font-weight:700}
+.hdr-note{font-size:10px;color:var(--muted);margin-top:2px}
+
+/* KPI */
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-bottom:22px}
+.kpi{background:var(--white);border:1px solid var(--border);border-top:3px solid var(--kc,#94a3b8);
+  border-radius:var(--r);padding:14px 16px;box-shadow:var(--sh)}
+.kpi-lbl{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+.kpi-row{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.kpi-main{font-family:'DM Mono',monospace;font-size:22px;font-weight:700;line-height:1}
+.kpi-main small{font-size:11px;font-weight:400;color:var(--muted);margin-left:2px}
+.kpi-side{font-family:'DM Mono',monospace;font-size:17px;font-weight:500;color:var(--sub);line-height:1}
+.kpi-side small{font-size:10px;color:var(--muted);margin-left:2px}
+.kpi-avg{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-top:4px}
+.bdg{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;margin-top:5px;font-family:'DM Mono',monospace}
+.bdg.neg{background:var(--red-lt);color:var(--red)}.bdg.pos{background:var(--green-lt);color:var(--green)}.bdg.neu{background:#f1f5f9;color:var(--sub)}
+.ch-kpi{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:7px}
+.ch-row{display:flex;align-items:center;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border)}
+.ch-row:last-child{border-bottom:none}
+.ch-lbl{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:700}
+.ch-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.ch-pct{font-family:'DM Mono',monospace;font-size:11px;color:var(--sub)}
+
+/* TABS */
+.tabs{display:flex;border-bottom:2px solid var(--border);margin-bottom:20px;flex-wrap:wrap;gap:0}
+.tb{padding:9px 18px;background:transparent;border:none;font-family:inherit;font-size:13px;font-weight:700;
+  color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;position:relative;bottom:-2px;
+  transition:all .15s;white-space:nowrap}
+.tb:hover{color:var(--text)}
+.tb.on{color:var(--accent);border-bottom-color:var(--accent)}
+.tb.web-tab{color:#14b8a6}.tb.web-tab.on{color:#0f766e;border-bottom-color:#0f766e}
+.tb.tel-tab{color:#1e40af}.tb.tel-tab.on{color:#1e3a8a;border-bottom-color:#1e3a8a}
+
+/* PANELS */
+.panel{display:none}.panel.on{display:block;animation:fi .2s ease}
+@keyframes fi{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+
+/* COMMENT */
+.cmt{background:var(--white);border:1px solid var(--border);border-left:4px solid var(--cmt-c,var(--accent));
+  border-radius:var(--r);padding:13px 16px;margin-bottom:16px;box-shadow:var(--sh);position:relative}
+.cmt-hd{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--cmt-c,var(--accent));margin-bottom:6px}
+.cmt-body{font-size:13px;color:var(--sub);line-height:1.85}
+.cmt-body strong{color:var(--text);font-weight:700}
+.fr{color:var(--red);font-weight:700}.fg{color:var(--green);font-weight:700}.fo{color:var(--orange);font-weight:700}
+.edit-btn{position:absolute;top:9px;right:11px;font-size:10px;padding:2px 9px;background:var(--acc-lt);
+  color:var(--accent);border:1px solid #bfdbfe;border-radius:20px;cursor:pointer;font-family:inherit;font-weight:700}
+textarea.cmt-edit{width:100%;min-height:72px;border:1px solid var(--border2);border-radius:6px;
+  padding:7px 9px;font-family:inherit;font-size:13px;color:var(--sub);resize:vertical;margin-top:7px;display:none}
+
+/* LAYOUT */
+.g{display:grid;gap:13px;margin-bottom:16px}
+.g1{grid-template-columns:1fr}.g2{grid-template-columns:1fr 1fr}
+.g31{grid-template-columns:2fr 1fr}.g3{grid-template-columns:1fr 1fr 1fr}
+.g21{grid-template-columns:2fr 1fr}
+
+/* CARD */
+.card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden}
+.card-hd{padding:10px 15px 8px;border-bottom:1px solid var(--border);font-size:9px;font-weight:700;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--sub);display:flex;align-items:center;justify-content:space-between}
+.tag{font-size:9px;padding:2px 7px;border-radius:20px;background:var(--acc-lt);color:var(--accent);font-weight:700}
+.card-bd{padding:13px 15px}.card-bd.p0{padding:0}
+.cw{position:relative}
+.h200{height:200px}.h240{height:240px}.h280{height:280px}.h320{height:320px}.h360{height:360px}.h400{height:400px}
+
+/* TOGGLE */
+.tog-row{display:flex;gap:5px;margin-bottom:11px;flex-wrap:wrap}
+.tog{padding:4px 11px;background:var(--bg);border:1px solid var(--border);border-radius:20px;
+  font-size:11px;font-weight:700;color:var(--sub);cursor:pointer;font-family:inherit;transition:all .15s}
+.tog.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* TABLE */
+table.t{width:100%;border-collapse:collapse;font-size:12px}
+table.t th{text-align:left;padding:6px 11px;font-size:9px;font-weight:700;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--muted);background:var(--bg);border-bottom:1px solid var(--border2);white-space:nowrap}
+table.t th.r{text-align:right}
+table.t td{padding:8px 11px;border-bottom:1px solid var(--border);vertical-align:middle}
+table.t td.r{text-align:right;font-family:'DM Mono',monospace;font-size:11px;white-space:nowrap}
+table.t tr:last-child td{border-bottom:none}
+table.t tr:hover td{background:#fafbfc}
+table.t tr.tot td{font-weight:700;background:#f8fafc}
+.db{display:inline-block;padding:1px 6px;border-radius:10px;font-size:10px;font-weight:700;font-family:'DM Mono',monospace;white-space:nowrap}
+.db.neg{background:var(--red-lt);color:var(--red)}.db.pos{background:var(--green-lt);color:var(--green)}.db.neu{background:#f1f5f9;color:var(--sub)}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:middle}
+.ibar{width:64px;height:4px;background:var(--bg);border-radius:2px;overflow:hidden;display:inline-block;vertical-align:middle}
+.ibar-f{height:100%;border-radius:2px}
+
+/* RANK */
+.rlist{list-style:none}
+.ri{display:grid;grid-template-columns:22px 1fr 80px 65px;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border)}
+.ri:last-child{border-bottom:none}
+.rno{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);text-align:right}
+.rno.g1c{color:#d97706;font-weight:700}.rno.g2c{color:#64748b;font-weight:700}.rno.g3c{color:#92400e;font-weight:700}
+.rn{font-size:11px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rb-w{height:4px;background:var(--bg);border-radius:2px;overflow:hidden}
+.rb-f{height:100%;border-radius:2px}
+.ra{font-family:'DM Mono',monospace;font-size:10px;text-align:right;color:var(--sub)}
+
+/* CHANNEL TAB ACCENT */
+.web-accent{border-left-color:#14b8a6!important}.web-accent .cmt-hd{color:#0f766e!important}
+.tel-accent{border-left-color:#1e40af!important}.tel-accent .cmt-hd{color:#1e3a8a!important}
+
+.footer{margin-top:32px;padding-top:13px;border-top:1px solid var(--border);
+  display:flex;justify-content:space-between;font-family:'DM Mono',monospace;font-size:9px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- LANG TOGGLE -->
+<div class="lang-bar">
+  <button class="lang-btn on" onclick="setLang('ja')">日本語</button>
+  <button class="lang-btn" onclick="setLang('zh')">繁體中文</button>
+</div>
+
+<!-- HEADER -->
+<header class="hdr">
+  <div>
+    <div class="hdr-brand" data-ja="Benesse Taiwan · 學習商品事業" data-zh="倍進台灣 · 學習商品事業">Benesse Taiwan · 學習商品事業</div>
+    <h1 class="hdr-title"><span data-ja="銷售実績" data-zh="銷售實績">銷售実績</span> <span><span data-ja="FY24 vs FY25 分析" data-zh="FY24 vs FY25 分析">FY24 vs FY25 分析</span></span></h1>
+  </div>
+  <div class="hdr-r">
+    <div class="hdr-period" data-ja="FY24: 2024.04–2025.03 ／ FY25: 2025.04–2026.02（11ヶ月）" data-zh="FY24: 2024.04–2025.03 ／ FY25: 2025.04–2026.02（11個月）">FY24: 2024.04–2025.03 ／ FY25: 2025.04–2026.02（11ヶ月）</div>
+    <div class="hdr-total">NT$ 104.5M</div>
+    <div class="hdr-note" data-ja="累計未稅売上（23ヶ月）　チャネル：TEL / KOL / WEB / EC / 挖貝 / その他" data-zh="累計未稅銷售（23個月）　渠道：TEL / KOL / WEB / EC / 挖貝 / 其他">累計未稅売上（23ヶ月）</div>
+  </div>
+</header>
+
+<!-- KPI -->
+<div class="kpi-grid">
+  <div class="kpi" style="--kc:var(--fy24)">
+    <div class="kpi-lbl" data-ja="FY24 売上実績（基準年）" data-zh="FY24 銷售實績（基準年）">FY24 売上実績（基準年）</div>
+    <div class="kpi-row">
+      <div class="kpi-main">56.6M<small>TWD</small></div>
+      <div class="kpi-side">15,994<small data-ja="個" data-zh="個">個</small></div>
+    </div>
+    <div class="kpi-avg" data-ja="平均単価 NT$ 3,541" data-zh="平均單價 NT$ 3,541">平均単価 NT$ 3,541</div>
+    <div class="bdg neu" data-ja="基準年" data-zh="基準年">基準年</div>
+  </div>
+  <div class="kpi" style="--kc:var(--fy25)">
+    <div class="kpi-lbl" data-ja="FY25 売上実績 ⚠️ 11ヶ月" data-zh="FY25 銷售實績 ⚠️ 11個月">FY25 売上実績 ⚠️ 11ヶ月</div>
+    <div class="kpi-row">
+      <div class="kpi-main">47.8M<small>TWD</small></div>
+      <div class="kpi-side">16,702<small data-ja="個" data-zh="個">個</small></div>
+    </div>
+    <div class="kpi-avg" data-ja="平均単価 NT$ 2,865　▼19%" data-zh="平均單價 NT$ 2,865　▼19%">平均単価 NT$ 2,865　<span class="db neg">▼19%</span></div>
+    <div class="bdg neg" data-ja="金額 ▼−15.5%　数量 ▲+4.4%" data-zh="金額 ▼−15.5%　數量 ▲+4.4%">金額 ▼−15.5%　数量 ▲+4.4%</div>
+  </div>
+  <div class="kpi" style="--kc:var(--fy24)">
+    <div class="kpi-lbl" data-ja="チャネル構成比 FY24" data-zh="渠道構成比 FY24">チャネル構成比 FY24</div>
+    <div class="ch-kpi">
+      <div>
+        <div class="ch-row"><span class="ch-lbl"><span class="ch-dot" style="background:var(--tel)"></span>TEL</span><span class="ch-pct">37.3%</span></div>
+        <div class="ch-row"><span class="ch-lbl"><span class="ch-dot" style="background:var(--kol)"></span>KOL</span><span class="ch-pct">32.5%</span></div>
+        <div class="ch-row"><span class="ch-lbl"><span class="ch-dot" style="background:var(--web)"></span>WEB</span><span class="ch-pct">22.7%</span></div>
+      </div>
+      <div>
+        <div class="ch-row"><span class="ch-lbl"><span class="ch-dot" style="background:var(--ec)"></span>EC</span><span class="ch-pct">5.6%</span></div>
+        <div class="ch-row"><span class="ch-lbl"><span class="ch-dot" style="background:var(--other)"></span><span data-ja="他" data-zh="其他">他</span></span><span class="ch-pct">2.0%</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="kpi" style="--kc:var(--fy25)">
+    <div class="kpi-lbl" data-ja="チャネル構成比 FY25（11ヶ月）" data-zh="渠道構成比 FY25（11個月）">チャネル構成比 FY25（11ヶ月）</div>
+    <div class="ch-kpi">
+      <div>
+        <div class="ch-row"><span class="ch-lbl"><span class="ch-dot" style="background:var(--tel)"></span>TEL</span><span class="ch-pct">35.2%</span></div>
+        <div class="ch-row"><span class="ch-lbl"><span class="ch-dot" style="background:var(--kol)"></span>KOL</span><span class="ch-pct">21.7%</span></div>
+        <div class="ch-row"><span class="ch-lbl"><span class="ch-dot" style="background:var(--web)"></span>WEB</span><span class="ch-pct">27.0%</span></div>
+      </div>
+      <div>
+        <div class="ch-row"><span class="ch-lbl"><span class="ch-dot" style="background:var(--ec)"></span>EC</span><span class="ch-pct">9.5%</span></div>
+        <div class="ch-row"><span class="ch-lbl"><span class="ch-dot" style="background:var(--wab)"></span>挖貝</span><span class="ch-pct">6.4%</span></div>
+        <div class="ch-row"><span class="ch-lbl"><span class="ch-dot" style="background:var(--other)"></span><span data-ja="他" data-zh="其他">他</span></span><span class="ch-pct">0.2%</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TABS -->
+<nav class="tabs">
+  <button class="tb on"  onclick="sw(0)" data-ja="📈 月次トレンド" data-zh="📈 月度趨勢">📈 月次トレンド</button>
+  <button class="tb" onclick="sw(1)" data-ja="📊 FY年次比較" data-zh="📊 年度比較">📊 FY年次比較</button>
+  <button class="tb" onclick="sw(2)" data-ja="🔀 チャネル構造" data-zh="🔀 渠道結構">🔀 チャネル構造</button>
+  <button class="tb web-tab" onclick="sw(3)" data-ja="🌐 WEB分析" data-zh="🌐 WEB分析">🌐 WEB分析</button>
+  <button class="tb tel-tab" onclick="sw(4)" data-ja="📞 TEL分析" data-zh="📞 TEL分析">📞 TEL分析</button>
+  <button class="tb" onclick="sw(5)" data-ja="🏆 商品・SKU" data-zh="🏆 商品・SKU">🏆 商品・SKU</button>
+  <button class="tb" onclick="sw(6)" data-ja="👥 KOL分析" data-zh="👥 KOL分析">👥 KOL分析</button>
+</nav>
+
+<!-- ═══ TAB 0: 月次トレンド ════ -->
+<div class="panel on" id="p0">
+  <div class="cmt" id="cmt0">
+    <div class="cmt-hd" data-ja="分析コメント" data-zh="分析評論">分析コメント <button class="edit-btn" onclick="toggleEdit(0)" data-ja="✏️ 編集" data-zh="✏️ 編輯">✏️ 編集</button></div>
+    <div class="cmt-body" id="cmt0-view">
+      <strong data-ja="FY24：紫系、FY25：赤系で色分け表示。" data-zh="FY24以紫色系列、FY25以紅色系列區分顯示。">FY24：紫系、FY25：赤系で色分け表示。</strong>
+      <span data-ja="FY24の7月（NT$14.4M）・FY25の5月（NT$9.7M）に通常月比" data-zh="FY24年7月（NT$14.4M）・FY25年5月（NT$9.7M）出現">FY24の7月（NT$14.4M）・FY25の5月（NT$9.7M）に通常月比</span><span class="fr" data-ja="3〜5倍のスパイク" data-zh="3〜5倍的高峰">3〜5倍のスパイク</span>。
+      <span data-ja="FY25後半（10月〜2月）はNT$3.4〜5.2Mで安定推移。" data-zh="FY25下半期（10月〜2月）穩定在NT$3.4〜5.2M。">FY25後半（10月〜2月）はNT$3.4〜5.2Mで安定推移。</span>
+    </div>
+    <textarea class="cmt-edit" id="cmt0-edit"></textarea>
+  </div>
+  <div class="tog-row">
+    <button class="tog on" onclick="togT0('all',this)" data-ja="月次・全体" data-zh="月度・全體">月次・全体</button>
+    <button class="tog" onclick="togT0('ch',this)" data-ja="月次・チャネル別" data-zh="月度・渠道別">月次・チャネル別</button>
+    <button class="tog" onclick="togT0('q-all',this)" data-ja="四半期・全体" data-zh="季度・全體">四半期・全体</button>
+    <button class="tog" onclick="togT0('q-ch',this)" data-ja="四半期・チャネル別" data-zh="季度・渠道別">四半期・チャネル別</button>
+  </div>
+  <div class="g g1">
+    <div class="card"><div class="card-hd" id="t0-hd">月次推移（全体）<span class="tag">23ヶ月</span></div>
+      <div class="card-bd"><div class="cw h360"><canvas id="c0"></canvas></div></div></div>
+  </div>
+  <div class="card"><div class="card-hd" data-ja="月次実績数値（前月差・成長率）" data-zh="月度實績數值（前月差・成長率）">月次実績数値（前月差・成長率）</div>
+    <div class="card-bd p0"><table class="t">
+      <tr><th data-ja="年月" data-zh="年月">年月</th><th class="r" data-ja="未稅金額" data-zh="未稅金額">未稅金額</th><th class="r" data-ja="前月差" data-zh="前月差">前月差</th><th class="r" data-ja="前月比" data-zh="前月比">前月比</th><th class="r" data-ja="数量" data-zh="數量">数量</th><th class="r" data-ja="前月差" data-zh="前月差">前月差</th><th class="r" data-ja="前月比" data-zh="前月比">前月比</th></tr>
+      <tbody id="tb0"></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- ═══ TAB 1: FY比較 ══════════ -->
+<div class="panel" id="p1">
+  <div class="cmt" id="cmt1">
+    <div class="cmt-hd" data-ja="分析コメント" data-zh="分析評論">分析コメント <button class="edit-btn" onclick="toggleEdit(1)" data-ja="✏️ 編集" data-zh="✏️ 編輯">✏️ 編集</button></div>
+    <div class="cmt-body" id="cmt1-view">
+      <strong data-ja="金額減・数量増・単価大幅下落：" data-zh="金額減・數量增・單價大幅下滑：">金額減・数量増・単価大幅下落：</strong><span class="fr">金額▼15.5%（−NT$8.8M）</span>、<span class="fg">数量▲4.4%（+708個）</span>、<span class="fr" data-ja="単価▼19%（NT$3,541→2,865）" data-zh="單價▼19%（NT$3,541→2,865）">単価▼19%（NT$3,541→2,865）</span>。
+      <span data-ja="Q別ではFY25のQ1が大幅増（5月スパイク効果）、Q2以降はFY24水準を下回る。" data-zh="按季度看，FY25的Q1大幅增加（5月高峰效果），Q2以後低於FY24水準。">Q別ではFY25のQ1が大幅増（5月スパイク効果）、Q2以降はFY24水準を下回る。</span><span class="fo" data-ja="FY25は3月未確定。" data-zh="FY25的3月數據尚未確定。">FY25は3月未確定。</span>
+    </div>
+    <textarea class="cmt-edit" id="cmt1-edit"></textarea>
+  </div>
+  <div class="tog-row">
+    <button class="tog on" onclick="togT1('month',this)" data-ja="月次比較" data-zh="月度比較">月次比較</button>
+    <button class="tog" onclick="togT1('q',this)" data-ja="四半期比較" data-zh="季度比較">四半期比較</button>
+    <button class="tog" onclick="togT1('ch',this)" data-ja="チャネル積み上げ" data-zh="渠道堆疊">チャネル積み上げ</button>
+    <button class="tog" onclick="togT1('q-ch',this)" data-ja="四半期×チャネル" data-zh="季度×渠道">四半期×チャネル</button>
+  </div>
+  <div class="g g1">
+    <div class="card"><div class="card-hd" id="t1-hd">月次比較（FY24 vs FY25）</div>
+      <div class="card-bd"><div class="cw h300"><canvas id="c1"></canvas></div></div></div>
+  </div>
+  <div class="card"><div class="card-hd" data-ja="FY月次比較テーブル" data-zh="FY月度比較表">FY月次比較テーブル</div>
+    <div class="card-bd p0"><table class="t">
+      <tr><th data-ja="FY内月" data-zh="FY內月">FY内月</th><th class="r">FY24</th><th class="r">FY25</th><th class="r" data-ja="差分" data-zh="差額">差分</th><th class="r" data-ja="成長率" data-zh="成長率">成長率</th><th class="r" data-ja="FY24数量" data-zh="FY24數量">FY24数量</th><th class="r" data-ja="FY25数量" data-zh="FY25數量">FY25数量</th><th class="r" data-ja="FY24単価" data-zh="FY24單價">FY24単価</th><th class="r" data-ja="FY25単価" data-zh="FY25單價">FY25単価</th><th class="r" data-ja="単価差" data-zh="單價差">単価差</th></tr>
+      <tbody id="tb1"></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- ═══ TAB 2: チャネル構造 ════ -->
+<div class="panel" id="p2">
+  <div class="cmt" id="cmt2">
+    <div class="cmt-hd" data-ja="分析コメント" data-zh="分析評論">分析コメント <button class="edit-btn" onclick="toggleEdit(2)" data-ja="✏️ 編集" data-zh="✏️ 編輯">✏️ 編集</button></div>
+    <div class="cmt-body" id="cmt2-view">
+      <strong data-ja="自社チャネル（WEB）だけが成長：" data-zh="自有渠道（WEB）唯一成長：">自社チャネル（WEB）だけが成長：</strong><span class="fg">WEB +0.8%（唯一プラス）</span>。TEL<span class="fr">▼20.3%</span>・KOL<span class="fr">▼43.5%</span>が大幅減。<span class="fg">EC▲43.8%・挖貝はFY25新規</span>。<span class="fr" data-ja="CRM海外経代銷はFY25でゼロ。" data-zh="CRM海外經代銷在FY25為零。">CRM海外経代銷はFY25でゼロ。</span>
+    </div>
+    <textarea class="cmt-edit" id="cmt2-edit"></textarea>
+  </div>
+  <div class="g g31">
+    <div class="card"><div class="card-hd" data-ja="チャネル別 FY24 vs FY25" data-zh="渠道別 FY24 vs FY25">チャネル別 FY24 vs FY25</div>
+      <div class="card-bd"><div class="cw h300"><canvas id="c2a"></canvas></div></div></div>
+    <div class="card"><div class="card-hd" data-ja="構成比変化" data-zh="構成比變化">構成比変化</div>
+      <div class="card-bd" style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-size:9px;font-weight:700;color:var(--muted)">FY24</div>
+        <div class="cw" style="height:120px"><canvas id="c2b"></canvas></div>
+        <div style="font-size:9px;font-weight:700;color:var(--muted)">FY25</div>
+        <div class="cw" style="height:120px"><canvas id="c2c"></canvas></div>
+      </div>
+    </div>
+  </div>
+  <div class="card"><div class="card-hd" data-ja="チャネル別実績比較" data-zh="渠道別實績比較">チャネル別実績比較</div>
+    <div class="card-bd p0"><table class="t">
+      <tr><th data-ja="チャネル" data-zh="渠道">チャネル</th><th class="r">FY24</th><th class="r">FY24%</th><th class="r">FY25</th><th class="r">FY25%</th><th class="r" data-ja="差分" data-zh="差額">差分</th><th class="r" data-ja="成長率" data-zh="成長率">成長率</th><th>FY24</th><th>FY25</th></tr>
+      <tbody id="tb2"></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- ═══ TAB 3: WEB分析 ════════ -->
+<div class="panel" id="p3">
+  <div class="cmt web-accent" id="cmt3">
+    <div class="cmt-hd" style="color:#0f766e" data-ja="WEB分析コメント" data-zh="WEB分析評論">WEB分析コメント <button class="edit-btn" style="color:#0f766e;border-color:#99f6e4;background:#f0fdfa" onclick="toggleEdit(3)" data-ja="✏️ 編集" data-zh="✏️ 編輯">✏️ 編集</button></div>
+    <div class="cmt-body" id="cmt3-view">
+      <strong data-ja="WEBは唯一FY25でも前年維持（+0.8%）：" data-zh="WEB是唯一在FY25維持前年水準的渠道（+0.8%）：">WEBは唯一FY25でも前年維持（+0.8%）：</strong>FY24 NT$12.8M → FY25 NT$12.9M。
+      <span data-ja="Q別ではFY25のQ1（NT$3.5M）・Q3（NT$4.4M）がFY24を上回る。Q2・Q4は下回る。" data-zh="按季度看，FY25的Q1（NT$3.5M）・Q3（NT$4.4M）超過FY24。Q2・Q4低於FY24。">Q別ではFY25のQ1・Q3がFY24を上回る。Q2・Q4は下回る。</span>
+      <span data-ja="商品別では英語Plusが大幅減少する一方、好情緒EQ・語彙表達がFY25から新規参入し補完。" data-zh="商品方面，英語Plus大幅減少，但好情緒EQ・語彙表達在FY25新登場並補充。">英語Plusが大幅減少する一方、好情緒EQ・語彙表達がFY25から新規参入し補完。</span>
+    </div>
+    <textarea class="cmt-edit" id="cmt3-edit"></textarea>
+  </div>
+  <div class="tog-row">
+    <button class="tog on" style="--accent:#0f766e" onclick="togChTab(3,'month',this)">月次推移</button>
+    <button class="tog" style="--accent:#0f766e" onclick="togChTab(3,'q',this)" data-ja="四半期推移" data-zh="季度推移">四半期推移</button>
+    <button class="tog" style="--accent:#0f766e" onclick="togChTab(3,'sku',this)" data-ja="商品別" data-zh="商品別">商品別</button>
+  </div>
+  <div class="g g1">
+    <div class="card"><div class="card-hd" id="t3-hd" data-ja="WEB 月次推移（FY24 vs FY25）" data-zh="WEB 月度推移（FY24 vs FY25）">WEB 月次推移（FY24 vs FY25）</div>
+      <div class="card-bd"><div class="cw h300"><canvas id="c3"></canvas></div></div></div>
+  </div>
+  <div class="card"><div class="card-hd" data-ja="WEB 実績数値（FY月次比較）" data-zh="WEB 實績數值（FY月度比較）">WEB 実績数値（FY月次比較）</div>
+    <div class="card-bd p0"><table class="t">
+      <tr><th data-ja="FY内月" data-zh="FY內月">FY内月</th><th class="r">FY24</th><th class="r">FY25</th><th class="r" data-ja="差分" data-zh="差額">差分</th><th class="r" data-ja="成長率" data-zh="成長率">成長率</th><th class="r" data-ja="FY24数量" data-zh="FY24數量">FY24数量</th><th class="r" data-ja="FY25数量" data-zh="FY25數量">FY25数量</th></tr>
+      <tbody id="tb3"></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- ═══ TAB 4: TEL分析 ════════ -->
+<div class="panel" id="p4">
+  <div class="cmt tel-accent" id="cmt4">
+    <div class="cmt-hd" style="color:#1e3a8a" data-ja="TEL分析コメント" data-zh="TEL分析評論">TEL分析コメント <button class="edit-btn" style="color:#1e3a8a;border-color:#bfdbfe;background:#eff6ff" onclick="toggleEdit(4)" data-ja="✏️ 編集" data-zh="✏️ 編輯">✏️ 編集</button></div>
+    <div class="cmt-body" id="cmt4-view">
+      <strong data-ja="TELはFY25で▼20.3%（NT$21.1M→16.8M）：" data-zh="TEL在FY25下滑20.3%（NT$21.1M→16.8M）：">TELはFY25で▼20.3%（NT$21.1M→16.8M）：</strong><span class="fo" data-ja="最大チャネルの減少が全体の落ち込みに直結。" data-zh="最大渠道的下滑直接導致整體業績下降。">最大チャネルの減少が全体の落ち込みに直結。</span>
+      <span data-ja="Q別ではQ2（7〜9月）が最大の落ち込み（FY24 NT$7.4M→FY25 NT$4.0M、▼46%）。Q1・Q3・Q4は比較的安定。" data-zh="按季度看，Q2（7〜9月）降幅最大（FY24 NT$7.4M→FY25 NT$4.0M，▼46%）。Q1・Q3・Q4相對穩定。">Q2（7〜9月）が最大の落ち込み（▼46%）。Q1・Q3・Q4は比較的安定。</span>
+      <span data-ja="英語Plus・英語進階版が大幅減少する一方、好情緒EQ・語彙表達・注音2.0がFY25で拡大。" data-zh="英語Plus・英語進階版大幅減少，好情緒EQ・語彙表達・注音2.0在FY25擴大。">英語Plus・英語進階版が大幅減少、好情緒EQ・語彙表達・注音2.0がFY25で拡大。</span>
+    </div>
+    <textarea class="cmt-edit" id="cmt4-edit"></textarea>
+  </div>
+  <div class="tog-row">
+    <button class="tog on" onclick="togChTab(4,'month',this)" data-ja="月次推移" data-zh="月度推移">月次推移</button>
+    <button class="tog" onclick="togChTab(4,'q',this)" data-ja="四半期推移" data-zh="季度推移">四半期推移</button>
+    <button class="tog" onclick="togChTab(4,'sku',this)" data-ja="商品別" data-zh="商品別">商品別</button>
+  </div>
+  <div class="g g1">
+    <div class="card"><div class="card-hd" id="t4-hd" data-ja="TEL 月次推移（FY24 vs FY25）" data-zh="TEL 月度推移（FY24 vs FY25）">TEL 月次推移（FY24 vs FY25）</div>
+      <div class="card-bd"><div class="cw h300"><canvas id="c4"></canvas></div></div></div>
+  </div>
+  <div class="card"><div class="card-hd" data-ja="TEL 実績数値（FY月次比較）" data-zh="TEL 實績數值（FY月度比較）">TEL 実績数値（FY月次比較）</div>
+    <div class="card-bd p0"><table class="t">
+      <tr><th data-ja="FY内月" data-zh="FY內月">FY内月</th><th class="r">FY24</th><th class="r">FY25</th><th class="r" data-ja="差分" data-zh="差額">差分</th><th class="r" data-ja="成長率" data-zh="成長率">成長率</th><th class="r" data-ja="FY24数量" data-zh="FY24數量">FY24数量</th><th class="r" data-ja="FY25数量" data-zh="FY25數量">FY25数量</th></tr>
+      <tbody id="tb4"></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- ═══ TAB 5: 商品・SKU ═══════ -->
+<div class="panel" id="p5">
+  <div class="cmt" id="cmt5">
+    <div class="cmt-hd" data-ja="分析コメント" data-zh="分析評論">分析コメント <button class="edit-btn" onclick="toggleEdit(5)" data-ja="✏️ 編集" data-zh="✏️ 編輯">✏️ 編集</button></div>
+    <div class="cmt-body" id="cmt5-view">
+      <strong data-ja="英語Plusが急落しFY25新SKUが補完：" data-zh="英語Plus急速下滑，FY25新SKU補充：">英語Plusが急落しFY25新SKUが補完：</strong><span class="fr" data-ja="英語Plus FY25で▼71%（NT$24.6M→NT$7.2M）。" data-zh="英語Plus FY25下滑▼71%（NT$24.6M→NT$7.2M）。">英語Plus FY25で▼71%（NT$24.6M→NT$7.2M）。</span>
+      <span class="fg" data-ja="好情緒EQ・語彙表達・巧虎點讀圖鑑はFY24ゼロ→FY25新規。寶寶套組・注音2.0は成長継続。" data-zh="好情緒EQ・語彙表達・巧虎點讀圖鑑從FY24零→FY25新登場。寶寶套組・注音2.0持續成長。">好情緒EQ・語彙表達・點讀圖鑑はFY25新規。寶寶套組・注音2.0は成長継続。</span>
+    </div>
+    <textarea class="cmt-edit" id="cmt5-edit"></textarea>
+  </div>
+  <div class="g g31">
+    <div class="card"><div class="card-hd" data-ja="商品別 FY24 vs FY25（TOP10）" data-zh="商品別 FY24 vs FY25（TOP10）">商品別 FY24 vs FY25（TOP10）</div>
+      <div class="card-bd"><div class="cw h380"><canvas id="c5a"></canvas></div></div></div>
+    <div class="card"><div class="card-hd" data-ja="FY別構成比" data-zh="FY別構成比">FY別構成比</div>
+      <div class="card-bd" style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-size:9px;font-weight:700;color:var(--muted)">FY24</div>
+        <div class="cw" style="height:145px"><canvas id="c5b"></canvas></div>
+        <div style="font-size:9px;font-weight:700;color:var(--muted)">FY25</div>
+        <div class="cw" style="height:145px"><canvas id="c5c"></canvas></div>
+      </div>
+    </div>
+  </div>
+  <div class="card"><div class="card-hd" data-ja="商品別実績（FY比較）" data-zh="商品別實績（FY比較）">商品別実績（FY比較）</div>
+    <div class="card-bd p0"><table class="t">
+      <tr><th>#</th><th data-ja="商品名" data-zh="商品名稱">商品名</th><th class="r" data-ja="累計" data-zh="累計">累計</th><th class="r">FY24</th><th class="r">FY25</th><th class="r" data-ja="差分" data-zh="差額">差分</th><th class="r" data-ja="成長率" data-zh="成長率">成長率</th><th class="r" data-ja="数量" data-zh="數量">数量</th><th class="r" data-ja="平均単価" data-zh="平均單價">平均単価</th></tr>
+      <tbody id="tb5"></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- ═══ TAB 6: KOL分析 ═════════ -->
+<div class="panel" id="p6">
+  <div class="cmt" id="cmt6">
+    <div class="cmt-hd" data-ja="分析コメント" data-zh="分析評論">分析コメント <button class="edit-btn" onclick="toggleEdit(6)" data-ja="✏️ 編集" data-zh="✏️ 編輯">✏️ 編集</button></div>
+    <div class="cmt-body" id="cmt6-view">
+      <strong data-ja="KOL全体がFY25で▼43.5%（NT$18.4M→NT$10.4M）：" data-zh="KOL整體在FY25下滑43.5%（NT$18.4M→NT$10.4M）：">KOL全体がFY25で▼43.5%（NT$18.4M→NT$10.4M）：</strong><span class="fr" data-ja="豬豬隊友▼56%が主因。史黛拉・三寶奴爸奴媽はFY25でほぼゼロ。" data-zh="豬豬隊友▼56%是主因。史黛拉・三寶奴爸奴媽在FY25幾乎為零。">豬豬隊友▼56%が主因。</span>
+      <span class="fg" data-ja="琪寶這一家・漢娜在翻譯・I'm蘋果はFY25新規。依存集中度はFY24→FY25で改善傾向。" data-zh="琪寶這一家・漢娜在翻譯・I'm蘋果在FY25新登場。依存集中度呈改善趨勢。">琪寶這一家・漢娜・I'm蘋果はFY25新規。依存集中度は改善傾向。</span>
+    </div>
+    <textarea class="cmt-edit" id="cmt6-edit"></textarea>
+  </div>
+  <div class="g g31">
+    <div class="card"><div class="card-hd" data-ja="KOL別 FY24 vs FY25" data-zh="KOL別 FY24 vs FY25">KOL別 FY24 vs FY25</div>
+      <div class="card-bd"><div class="cw h380"><canvas id="c6a"></canvas></div></div></div>
+    <div class="card"><div class="card-hd" data-ja="依存比率変化" data-zh="依存比率變化">依存比率変化</div>
+      <div class="card-bd" style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-size:9px;font-weight:700;color:var(--muted)">FY24（NT$18.4M）</div>
+        <div class="cw" style="height:145px"><canvas id="c6b"></canvas></div>
+        <div style="font-size:9px;font-weight:700;color:var(--muted)">FY25（NT$10.4M）</div>
+        <div class="cw" style="height:145px"><canvas id="c6c"></canvas></div>
+      </div>
+    </div>
+  </div>
+  <div class="card"><div class="card-hd" data-ja="KOL別実績比較（依存比率付）" data-zh="KOL別實績比較（依存比率）">KOL別実績比較（依存比率付）</div>
+    <div class="card-bd p0"><table class="t">
+      <tr><th>#</th><th data-ja="KOL名" data-zh="KOL名稱">KOL名</th><th class="r" data-ja="累計" data-zh="累計">累計</th><th class="r">FY24</th><th class="r">FY24%</th><th class="r">FY25</th><th class="r">FY25%</th><th class="r" data-ja="差分" data-zh="差額">差分</th><th class="r" data-ja="成長率" data-zh="成長率">成長率</th></tr>
+      <tbody id="tb6"></tbody>
+    </table></div>
+  </div>
+</div>
+
+<div class="footer">
+  <span data-ja="DATA: ERP 月次銷貨実績 CUBE | UPDATED: 2026-02 | ※挖貝=ERP NaN（NT$3.0M） / SHOPLINE 網站→WEB統合 / 欣碩・海外経代銷・加贈禮他→その他（NT$1.2M）" data-zh="DATA: ERP月度銷貨實績 CUBE | UPDATED: 2026-02 | ※挖貝=ERP NaN（NT$3.0M） / SHOPLINE 網站→WEB整合 / 欣碩・海外經代銷・加贈禮他→其他（NT$1.2M）">DATA: ERP 月次銷貨実績 CUBE | UPDATED: 2026-02 | ※挖貝=ERP NaN（NT$3.0M）</span>
+  <span>Benesse Taiwan 台北支社　CONFIDENTIAL</span>
+</div>
+</div>
+
+<script>
+Chart.defaults.color='#94a3b8';
+Chart.defaults.font.family="'DM Mono',monospace";
+Chart.defaults.font.size=10;
+Chart.defaults.borderColor='#e3e6eb';
+
+const Fs=n=>(n/1e6).toFixed(1)+'M';
+const S=n=>n>=0?'+':'';
+const DC=v=>v>0?'pos':v<0?'neg':'neu';
+const TOTAL=104474156;
+
+/* ─── DATA ──────────────────────────────── */
+const D={
+  monthly:[
+    {m:"2024-04",a:2750268,q:852},{m:"2024-05",a:2498295,q:827},{m:"2024-06",a:2103430,q:658},
+    {m:"2024-07",a:14426472,q:3276},{m:"2024-08",a:6330714,q:1475},{m:"2024-09",a:2312761,q:551},
+    {m:"2024-10",a:6391334,q:2005},{m:"2024-11",a:4804191,q:1510},{m:"2024-12",a:5585444,q:1785},
+    {m:"2025-01",a:2354205,q:748},{m:"2025-02",a:3724990,q:1234},{m:"2025-03",a:3346080,q:1073},
+    {m:"2025-04",a:2921243,q:1242},{m:"2025-05",a:9698398,q:3400},{m:"2025-06",a:3875070,q:1459},
+    {m:"2025-07",a:3280787,q:1229},{m:"2025-08",a:3541206,q:1272},{m:"2025-09",a:2308292,q:779},
+    {m:"2025-10",a:5028125,q:1645},{m:"2025-11",a:5266026,q:1687},{m:"2025-12",a:3362183,q:1066},
+    {m:"2026-01",a:5160588,q:1738},{m:"2026-02",a:3404054,q:1185}
+  ],
+  fy24a:[2750268,2498295,2103430,14426472,6330714,2312761,6391334,4804191,5585444,2354205,3724990,3346080],
+  fy24q:[852,827,658,3276,1475,551,2005,1510,1785,748,1234,1073],
+  fy25a:[2921243,9698398,3875070,3280787,3541206,2308292,5028125,5266026,3362183,5160588,3404054],
+  fy25q:[1242,3400,1459,1229,1272,779,1645,1687,1066,1738,1185],
+  fyL:["4月","5月","6月","7月","8月","9月","10月","11月","12月","1月","2月","3月"],
+  qL:["FY24-Q1","FY24-Q2","FY24-Q3","FY24-Q4","FY25-Q1","FY25-Q2","FY25-Q3","FY25-Q4"],
+  qA:[7351993,23069947,16780969,9425275,16494711,9130285,13656334,8564642],
+  mCh:{
+    TEL:[1937237,1570548,1552926,3236038,3123088,1051380,680300,1631227,1936515,1107170,1708760,1595564,
+         1449977,1964073,1686227,1460698,1471092,1047161,1913149,1591076,1590217,1687038,973777],
+    KOL:[168103,424299,110959,8567177,1541446,309319,3319540,690229,1602099,484913,586796,571449,
+         350891,3461881,267532,292386,411872,479853,1130340,1516771,121210,1938364,415438],
+    WEB:[538114,439064,399734,2520210,1458857,510926,1752527,1718276,1427399,518088,994553,560383,
+         748077,1680425,1072211,1016634,921421,513415,1544814,1592461,1297107,1269586,1284516],
+    EC:[0,0,0,20001,171039,128659,632207,757984,333373,244034,430310,442400,
+        303539,408629,545522,506975,393833,267863,439822,565718,353649,265600,493867],
+    挖貝:[0,0,0,0,0,0,0,0,0,0,0,0,0,2183390,292817,0,332896,0,0,0,0,0,236456],
+    その他:[106814,64384,39811,83046,36284,312477,6760,6475,286058,0,4571,176284,68759,0,10761,4094,10092,0,0,0,0,0,0]
+  },
+  qCh:{
+    TEL:[5060711,7410506,4248042,4411494,5100277,3978951,5094442,2660815],
+    KOL:[703361,10417942,5611868,1643158,4080304,1184111,2768321,2353802],
+    WEB:[1376912,4489993,4898202,2073024,3500713,2451470,4434382,2554102],
+    EC:[0,319699,1723564,1116744,1257690,1168671,1359189,759467],
+    挖貝:[0,0,0,0,2476207,332896,0,236456],
+    その他:[211009,431807,299293,180855,79520,14186,0,0]
+  },
+  ch:[
+    {n:"TEL",t:37965238,f4:21130753,f5:16834485,c:"#1e40af"},
+    {n:"KOL",t:28762867,f4:18376329,f5:10386538,c:"#0ea5e9"},
+    {n:"WEB",t:25778798,f4:12838131,f5:12940667,c:"#14b8a6"},
+    {n:"EC", t:7705024, f4:3160007, f5:4545017, c:"#f97316"},
+    {n:"挖貝",t:3045559,f4:0,f5:3045559,c:"#8b5cf6"},
+    {n:"その他",t:1216670,f4:1122964,f5:93706,c:"#9ca3af"},
+  ],
+  // WEB月次FY別
+  web:{
+    fy24m:[538114,439064,399734,2520210,1458857,510926,1752527,1718276,1427399,518088,994553,560383],
+    fy24q:[170,142,114,585,330,121,619,553,463,163,332,178],
+    fy25m:[748077,1680425,1072211,1016634,921421,513415,1544814,1592461,1297107,1269586,1284516],
+    fy25q:[225,662,395,355,320,181,479,488,415,451,464],
+    fyQ24:[1376912,4489993,4898202,2073024],
+    fyQ25:[3500713,2451470,4434382,2554102],
+    sku:[
+      {n:"和巧虎一起說英語Plus",    f4:4964108,f5:1974673},
+      {n:"寶寶生活好習慣學習套組A",  f4:1371491,f5:1862771},
+      {n:"好情緒EQ X 品格人際套組",  f4:0,      f5:2521180},
+      {n:"注音套組2.0",             f4:1374645,f5:1088134},
+      {n:"和巧虎一起說英語套組進階版",f4:1851552,f5:535750},
+      {n:"語彙表達‧智育學習套組",    f4:0,      f5:2156153},
+      {n:"點讀巧比思考力遊戲組",     f4:613086, f5:1464175},
+      {n:"點讀巧比+購物遊戲組",      f4:1380140,f5:0},
+      {n:"巧虎雙語點讀圖鑑",         f4:0,      f5:1151640},
+      {n:"九九乘法偵探套組",         f4:733348, f5:0},
+    ]
+  },
+  // TEL月次FY別
+  tel:{
+    fy24m:[1937237,1570548,1552926,3236038,3123088,1051380,680300,1631227,1936515,1107170,1708760,1595564],
+    fy24q:[591,507,500,755,725,255,198,507,625,347,567,507],
+    fy25m:[1449977,1964073,1686227,1460698,1471092,1047161,1913149,1591076,1590217,1687038,973777],
+    fy25q:[444,708,657,556,523,315,561,478,486,539,312],
+    fyQ24:[5060711,7410506,4248042,4411494],
+    fyQ25:[5100277,3978951,5094442,2660815],
+    sku:[
+      {n:"和巧虎一起說英語Plus",    f4:7630906,f5:2861447},
+      {n:"和巧虎一起說英語套組進階版",f4:5687518,f5:1825835},
+      {n:"注音套組2.0",             f4:1609342,f5:2456686},
+      {n:"好情緒EQ X 品格人際套組",  f4:0,      f5:3260366},
+      {n:"點讀巧比思考力遊戲組",     f4:1771671,f5:1483216},
+      {n:"寶寶生活好習慣學習套組A",  f4:1273234,f5:1784987},
+      {n:"語彙表達‧智育學習套組",    f4:0,      f5:1946138},
+      {n:"九九乘法偵探套組",         f4:1669081,f5:21429},
+      {n:"巧虎注音拼音學習套組",     f4:1095260,f5:0},
+      {n:"巧虎雙語點讀圖鑑",         f4:0,      f5:550685},
+    ]
+  },
+  sku:[
+    {n:"和巧虎一起說英語Plus",    t:31722073,f4:24557346,f5:7164727, q:6951},
+    {n:"和巧虎一起說英語套組進階版",t:13353727,f4:10222098,f5:3131629, q:3119},
+    {n:"寶寶生活好習慣學習套組A",  t:13211152,f4:5474483, f5:7736669, q:3233},
+    {n:"注音套組2.0",             t:9962507, f4:4092229, f5:5870278, q:3274},
+    {n:"點讀巧比思考力遊戲組",     t:8850316, f4:3715807, f5:5134509, q:4571},
+    {n:"好情緒EQ X 品格人際套組",  t:8659525, f4:0,       f5:8659525, q:4143},
+    {n:"語彙表達‧智育學習套組",    t:6113678, f4:0,       f5:6113678, q:1310},
+    {n:"九九乘法偵探套組",         t:3111967, f4:3090538, f5:21429,   q:1308},
+    {n:"巧虎雙語點讀圖鑑",         t:3061682, f4:0,       f5:3061682, q:1354},
+    {n:"點讀巧比+購物遊戲組",      t:2892809, f4:2892809, f5:0,       q:1266}
+  ],
+  kol:[
+    {n:"豬豬隊友",    t:11339876,f4:7877995, f5:3461881},
+    {n:"Avolala",    t:4412792, f4:2997943, f5:1414849},
+    {n:"莉芙太樂",    t:1870878, f4:1132110, f5:738768},
+    {n:"史黛拉",      t:1695933, f4:1640136, f5:55797},
+    {n:"琪寶這一家",  t:1180367, f4:0,       f5:1180367},
+    {n:"大V生活",     t:1111527, f4:508550,  f5:602977},
+    {n:"I'm蘋果",    t:860902,  f4:164459,  f5:696443},
+    {n:"三寶奴爸奴媽",t:847891,  f4:847891,  f5:0},
+    {n:"漢娜在翻譯",  t:758212,  f4:0,       f5:758212},
+    {n:"KOC聯合團購", t:630609,  f4:630609,  f5:0},
+    {n:"倩兒",        t:553428,  f4:359751,  f5:193677},
+    {n:"小竹",        t:538574,  f4:321597,  f5:216977},
+    {n:"奴爸奴媽",    t:516401,  f4:413654,  f5:102747},
+    {n:"娃拉社團",    t:391382,  f4:346155,  f5:45227},
+    {n:"翠蕊",        t:283817,  f4:283817,  f5:0},
+  ],
+  kol24t:18376329, kol25t:10386538,
+};
+
+/* ─── FY month color ─────────────────────── */
+// 各月のFY・月番号でカラーを返す（日本会計年度4月始まり）
+function monthColor(mStr){
+  // mStr: "2024-04" etc.
+  const [y,m]=mStr.split('-').map(Number);
+  const isFY24=(y===2024&&m>=4)||(y===2025&&m<=3);
+  // Q内の月番号
+  let q,qm;
+  if(m>=4&&m<=6){q=1;qm=m-3}
+  else if(m>=7&&m<=9){q=2;qm=m-6}
+  else if(m>=10&&m<=12){q=3;qm=m-9}
+  else{q=4;qm=m} // 1,2,3月
+  // FY24: #a5b4fc(薄)→#4338ca(濃) / FY25: #fda4af→#e11d48
+  const fy24colors=['#c7d2fe','#a5b4fc','#818cf8','#6366f1','#4f46e5','#4338ca','#3730a3','#312e81','#1e1b4b','#e0e7ff','#c7d2fe','#a5b4fc'];
+  const fy25colors=['#fecdd3','#fda4af','#fb7185','#f43f5e','#e11d48','#be123c','#9f1239','#881337','#4c0519','#fecdd3','#fda4af','#fb7185'];
+  // 月インデックス（FY内）
+  const fyIdx=(m>=4)? m-4 : m+8;
+  return isFY24? fy24colors[fyIdx] : fy25colors[fyIdx];
+}
+
+/* ─── CHARTS registry ────────────────────── */
+const charts={};
+function mkChart(id,cfg){if(charts[id])charts[id].destroy();charts[id]=new Chart(document.getElementById(id),cfg);return charts[id];}
+
+const BOPTS=(yfmt,stacked=false)=>({responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{labels:{boxWidth:9,padding:10,font:{size:11}}},
+    tooltip:{callbacks:{label:c=>` ${c.dataset.label}: NT$${c.raw.toLocaleString()}`}}},
+  scales:{x:{grid:{display:false},ticks:{maxRotation:40,font:{size:9}},stacked},
+    y:{grid:{color:'#f3f4f6'},ticks:{callback:yfmt},stacked}}
+});
+const LOPTS=(yfmt)=>({responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{labels:{boxWidth:9,padding:10,font:{size:11}}},
+    tooltip:{callbacks:{label:c=>` ${c.dataset.label}: NT$${c.raw.toLocaleString()}`}}},
+  scales:{x:{grid:{display:false}},y:{grid:{color:'#f3f4f6'},ticks:{callback:yfmt}}}
+});
+const DOPTS=(tot)=>({responsive:true,maintainAspectRatio:false,cutout:'55%',
+  plugins:{legend:{position:'right',labels:{boxWidth:7,padding:5,font:{size:9}}},
+    tooltip:{callbacks:{label:c=>` ${(c.parsed/tot*100).toFixed(1)}%`}}}
+});
+const CH_C=D.ch.map(d=>d.c);
+const SKU_C=['#1e40af','#3b82f6','#14b8a6','#f97316','#8b5cf6','#f43f5e','#fbbf24','#6b7280','#a3e635','#64748b'];
+const KOL_C=['#d97706','#0ea5e9','#14b8a6','#f43f5e','#8b5cf6','#f97316','#6366f1','#6b7280'];
+
+/* ─── TAB SWITCH ─────────────────────────── */
+const tabs=document.querySelectorAll('.tb');
+const panels=document.querySelectorAll('.panel');
+function sw(i){tabs.forEach((b,j)=>b.classList.toggle('on',i===j));panels.forEach((p,j)=>p.classList.toggle('on',i===j));}
+
+/* ─── LANG ───────────────────────────────── */
+let curLang='ja';
+function setLang(l){
+  curLang=l;
+  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.toggle('on',b.textContent.includes(l==='ja'?'日本語':'繁體')));
+  document.querySelectorAll('[data-ja]').forEach(el=>{
+    const txt=el.getAttribute('data-'+l);
+    if(txt) el.textContent=txt;
+  });
+}
+
+/* ─── EDIT COMMENT ───────────────────────── */
+function toggleEdit(i){
+  const v=document.getElementById(`cmt${i}-view`);
+  const e=document.getElementById(`cmt${i}-edit`);
+  const b=document.querySelector(`#cmt${i} .edit-btn`);
+  if(e.style.display==='block'){
+    v.innerHTML=e.value.replace(/\n/g,'<br>');e.style.display='none';
+    b.textContent=curLang==='ja'?'✏️ 編集':'✏️ 編輯';
+  }else{
+    e.value=v.innerText;e.style.display='block';
+    b.textContent=curLang==='ja'?'💾 保存':'💾 儲存';
+  }
+}
+
+/* ─── TAB 0: MONTHLY ────────────────────── */
+let t0mode='all';
+function buildT0(){
+  const m=D.monthly;
+  const labels=m.map(d=>d.m.slice(2).replace('-','/'));
+  if(t0mode==='all'){
+    mkChart('c0',{type:'bar',data:{labels,datasets:[{label:curLang==='ja'?'未稅金額':'未稅金額',
+      data:m.map(d=>d.a),
+      backgroundColor:m.map(d=>monthColor(d.m)),
+      borderRadius:3,borderSkipped:false}]},
+      options:{...BOPTS(v=>Fs(v)),plugins:{legend:{display:false},
+        tooltip:{callbacks:{label:c=>` NT$${c.raw.toLocaleString()}`,
+          title:ctxs=>{const d=m[ctxs[0].dataIndex];return `${d.m} (${d.m<'2025-04'?'FY24':'FY25'})`}}}}}});
+  }else if(t0mode==='ch'){
+    mkChart('c0',{type:'bar',data:{labels,datasets:D.ch.map(ch=>({label:ch.n,
+      data:D.mCh[ch.n]||new Array(23).fill(0),backgroundColor:ch.c,borderSkipped:false}))},
+      options:BOPTS(v=>Fs(v),true)});
+  }else if(t0mode==='q-all'){
+    mkChart('c0',{type:'bar',data:{labels:D.qL,datasets:[{label:curLang==='ja'?'売上金額':'銷售金額',
+      data:D.qA,backgroundColor:['#a5b4fc','#6366f1','#818cf8','#4338ca','#fda4af','#f43f5e','#fb7185','#e11d48'],
+      borderRadius:4,borderSkipped:false}]},
+      options:{...BOPTS(v=>Fs(v)),plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` NT$${c.raw.toLocaleString()}`}}}}});
+  }else{
+    mkChart('c0',{type:'bar',data:{labels:D.qL,datasets:D.ch.map(ch=>({label:ch.n,
+      data:D.qCh[ch.n]||new Array(8).fill(0),backgroundColor:ch.c,borderSkipped:false}))},
+      options:BOPTS(v=>Fs(v),true)});
+  }
+}
+function togT0(mode,btn){t0mode=mode;document.querySelectorAll('#p0 .tog').forEach(b=>b.classList.remove('on'));btn.classList.add('on');buildT0();}
+
+function buildT0table(){
+  const tb=document.getElementById('tb0');
+  D.monthly.forEach((d,i)=>{
+    const p=D.monthly[i-1];
+    const da=p?d.a-p.a:null,dq=p?d.q-p.q:null;
+    const ra=p&&p.a?((d.a-p.a)/p.a*100).toFixed(1):null;
+    const rq=p&&p.q?((d.q-p.q)/p.q*100).toFixed(1):null;
+    const fy=d.m<'2025-04'?'FY24':'FY25';
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${d.m} <span style="font-size:9px;color:var(--muted)">${fy}</span></td>
+      <td class="r">${d.a.toLocaleString()}</td>
+      <td class="r">${da==null?'—':`<span class="db ${DC(da)}">${S(da)}${da.toLocaleString()}</span>`}</td>
+      <td class="r">${ra==null?'—':`<span class="db ${DC(da)}">${S(da)}${ra}%</span>`}</td>
+      <td class="r">${d.q.toLocaleString()}</td>
+      <td class="r">${dq==null?'—':`<span class="db ${DC(dq)}">${S(dq)}${dq.toLocaleString()}</span>`}</td>
+      <td class="r">${rq==null?'—':`<span class="db ${DC(dq)}">${S(dq)}${rq}%</span>`}</td>`;
+    tb.appendChild(tr);
+  });
+}
+
+/* ─── TAB 1: FY比較 ──────────────────────── */
+let t1mode='month';
+function buildT1(){
+  if(t1mode==='month'){
+    mkChart('c1',{type:'line',data:{labels:D.fyL,datasets:[
+      {label:'FY24',data:D.fy24a,borderColor:'#6366f1',backgroundColor:'rgba(99,102,241,.08)',borderWidth:2.5,pointRadius:4,pointBackgroundColor:'#6366f1',tension:.3,fill:true},
+      {label:'FY25',data:D.fy25a,borderColor:'#f43f5e',backgroundColor:'rgba(244,63,94,.06)',borderWidth:2.5,pointRadius:4,pointBackgroundColor:'#f43f5e',tension:.3,fill:true}
+    ]},options:LOPTS(v=>Fs(v))});
+  }else if(t1mode==='q'){
+    const qL=['Q1（4-6月）','Q2（7-9月）','Q3（10-12月）','Q4（1-3月）'];
+    mkChart('c1',{type:'bar',data:{labels:qL,datasets:[
+      {label:'FY24',data:[7351993,23069947,16780969,9425275],backgroundColor:'rgba(99,102,241,.75)',borderRadius:3,borderSkipped:false},
+      {label:'FY25',data:[16494711,9130285,13656334,8564642],backgroundColor:'rgba(244,63,94,.75)',borderRadius:3,borderSkipped:false}
+    ]},options:BOPTS(v=>Fs(v))});
+  }else if(t1mode==='ch'){
+    mkChart('c1',{type:'bar',data:{labels:['FY24','FY25'],datasets:D.ch.map(ch=>({
+      label:ch.n,data:[ch.f4,ch.f5],backgroundColor:ch.c,borderRadius:2,borderSkipped:false}))},
+      options:BOPTS(v=>Fs(v),true)});
+  }else{
+    mkChart('c1',{type:'bar',data:{labels:D.qL,datasets:D.ch.map(ch=>({
+      label:ch.n,data:D.qCh[ch.n]||new Array(8).fill(0),backgroundColor:ch.c,borderSkipped:false}))},
+      options:BOPTS(v=>Fs(v),true)});
+  }
+}
+function togT1(mode,btn){t1mode=mode;document.querySelectorAll('#p1 .tog').forEach(b=>b.classList.remove('on'));btn.classList.add('on');buildT1();}
+
+function buildT1table(){
+  const tb=document.getElementById('tb1');
+  for(let i=0;i<12;i++){
+    const a=D.fy24a[i]||0,b=D.fy25a[i]||0,has=i<D.fy25a.length;
+    const aq=D.fy24q[i]||0,bq=D.fy25q[i]||0;
+    const da=b-a,u4=aq?Math.round(a/aq):0,u5=bq?Math.round(b/bq):0,du=u5-u4;
+    const gr=a?(da/a*100).toFixed(1)+'%':'—';
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${D.fyL[i]}</td>
+      <td class="r">${a.toLocaleString()}</td>
+      <td class="r">${has?b.toLocaleString():'<span style="color:#94a3b8">—</span>'}</td>
+      <td class="r">${has?`<span class="db ${DC(da)}">${S(da)}${da.toLocaleString()}</span>`:'—'}</td>
+      <td class="r">${has?`<span class="db ${DC(da)}">${S(da)}${gr}</span>`:'—'}</td>
+      <td class="r">${aq.toLocaleString()}</td><td class="r">${has?bq.toLocaleString():'—'}</td>
+      <td class="r">${u4.toLocaleString()}</td>
+      <td class="r">${has?u5.toLocaleString():'—'}</td>
+      <td class="r">${has?`<span class="db ${DC(du)}">${S(du)}${du.toLocaleString()}</span>`:'—'}</td>`;
+    tb.appendChild(tr);
+  }
+  const ta=D.fy24a.reduce((s,v)=>s+v,0),tb2=D.fy25a.reduce((s,v)=>s+v,0);
+  const taq=D.fy24q.reduce((s,v)=>s+v,0),tbq=D.fy25q.reduce((s,v)=>s+v,0);
+  const tda=tb2-ta,tu4=Math.round(ta/taq),tu5=Math.round(tb2/tbq),tdu=tu5-tu4;
+  const tr=document.createElement('tr');tr.className='tot';
+  tr.innerHTML=`<td>合計/平均</td>
+    <td class="r">${ta.toLocaleString()}</td><td class="r">${tb2.toLocaleString()}</td>
+    <td class="r"><span class="db ${DC(tda)}">${S(tda)}${tda.toLocaleString()}</span></td>
+    <td class="r"><span class="db ${DC(tda)}">${(tda/ta*100).toFixed(1)}%</span></td>
+    <td class="r">${taq.toLocaleString()}</td><td class="r">${tbq.toLocaleString()}</td>
+    <td class="r">${tu4.toLocaleString()}</td><td class="r">${tu5.toLocaleString()}</td>
+    <td class="r"><span class="db ${DC(tdu)}">${S(tdu)}${tdu.toLocaleString()}</span></td>`;
+  document.getElementById('tb1').appendChild(tr);
+}
+
+/* ─── TAB 2: CHANNEL ─────────────────────── */
+function buildT2(){
+  mkChart('c2a',{type:'bar',data:{labels:D.ch.map(d=>d.n),datasets:[
+    {label:'FY24',data:D.ch.map(d=>d.f4),backgroundColor:'rgba(99,102,241,.75)',borderRadius:3,borderSkipped:false},
+    {label:'FY25',data:D.ch.map(d=>d.f5),backgroundColor:'rgba(244,63,94,.75)',borderRadius:3,borderSkipped:false}
+  ]},options:BOPTS(v=>Fs(v))});
+  const t4=D.ch.reduce((s,d)=>s+d.f4,0),t5=D.ch.reduce((s,d)=>s+d.f5,0);
+  mkChart('c2b',{type:'doughnut',data:{labels:D.ch.map(d=>d.n),datasets:[{data:D.ch.map(d=>d.f4),backgroundColor:CH_C,borderColor:'#fff',borderWidth:1.5}]},options:DOPTS(t4)});
+  mkChart('c2c',{type:'doughnut',data:{labels:D.ch.map(d=>d.n),datasets:[{data:D.ch.map(d=>d.f5),backgroundColor:CH_C,borderColor:'#fff',borderWidth:1.5}]},options:DOPTS(t5)});
+  const t24=t4,t25=t5,tb=document.getElementById('tb2');
+  D.ch.forEach(d=>{
+    const diff=d.f5-d.f4,gr=d.f4?(diff/d.f4*100).toFixed(1)+'%':d.f5?'FY25新規':'—';
+    const p4=(d.f4/t24*100).toFixed(1),p5=d.f5?(d.f5/t25*100).toFixed(1):'0.0';
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td><span class="dot" style="background:${d.c}"></span>${d.n}</td>
+      <td class="r">${d.f4.toLocaleString()}</td><td class="r">${p4}%</td>
+      <td class="r">${d.f5?d.f5.toLocaleString():'<span style="color:#dc2626">0</span>'}</td><td class="r">${p5}%</td>
+      <td class="r"><span class="db ${DC(diff)}">${S(diff)}${diff.toLocaleString()}</span></td>
+      <td class="r"><span class="db ${DC(diff)}">${S(diff)}${gr}</span></td>
+      <td><div class="ibar"><div class="ibar-f" style="width:${p4}%;background:${d.c}"></div></div></td>
+      <td><div class="ibar"><div class="ibar-f" style="width:${p5}%;background:${d.c}"></div></div></td>`;
+    tb.appendChild(tr);
+  });
+}
+
+/* ─── TAB 3/4: WEB/TEL ──────────────────── */
+let t3mode='month', t4mode='month';
+function togChTab(tab,mode,btn){
+  if(tab===3){t3mode=mode;document.querySelectorAll('#p3 .tog').forEach(b=>b.classList.remove('on'));btn.classList.add('on');buildChTab(3);}
+  else{t4mode=mode;document.querySelectorAll('#p4 .tog').forEach(b=>b.classList.remove('on'));btn.classList.add('on');buildChTab(4);}
+}
+
+function buildChTab(tab){
+  const isWEB=tab===3;
+  const ch=isWEB?D.web:D.tel;
+  const cid=`c${tab}`;
+  const hd=document.getElementById(`t${tab}-hd`);
+  const mode=isWEB?t3mode:t4mode;
+  const accentC=isWEB?'#14b8a6':'#1e40af';
+  const qL=['Q1（4-6月）','Q2（7-9月）','Q3（10-12月）','Q4（1-3月）'];
+
+  if(mode==='month'){
+    hd.textContent=`${isWEB?'WEB':'TEL'} 月次推移（FY24 vs FY25）`;
+    mkChart(cid,{type:'line',data:{labels:D.fyL,datasets:[
+      {label:'FY24',data:ch.fy24m,borderColor:'#6366f1',backgroundColor:'rgba(99,102,241,.08)',borderWidth:2.5,pointRadius:4,pointBackgroundColor:'#6366f1',tension:.3,fill:true},
+      {label:'FY25',data:ch.fy25m,borderColor:'#f43f5e',backgroundColor:'rgba(244,63,94,.06)',borderWidth:2.5,pointRadius:4,pointBackgroundColor:'#f43f5e',tension:.3,fill:true}
+    ]},options:LOPTS(v=>Fs(v))});
+  }else if(mode==='q'){
+    hd.textContent=`${isWEB?'WEB':'TEL'} 四半期比較（FY24 vs FY25）`;
+    mkChart(cid,{type:'bar',data:{labels:qL,datasets:[
+      {label:'FY24',data:ch.fyQ24,backgroundColor:'rgba(99,102,241,.75)',borderRadius:4,borderSkipped:false},
+      {label:'FY25',data:ch.fyQ25,backgroundColor:'rgba(244,63,94,.75)',borderRadius:4,borderSkipped:false}
+    ]},options:BOPTS(v=>Fs(v))});
+  }else{
+    hd.textContent=`${isWEB?'WEB':'TEL'} 商品別構成（FY24 vs FY25）`;
+    const sN=ch.sku.map(d=>d.n.length>10?d.n.slice(0,10)+'…':d.n);
+    mkChart(cid,{type:'bar',data:{labels:sN,datasets:[
+      {label:'FY24',data:ch.sku.map(d=>d.f4),backgroundColor:`${accentC}cc`,borderRadius:3,borderSkipped:false},
+      {label:'FY25',data:ch.sku.map(d=>d.f5),backgroundColor:'rgba(244,63,94,.75)',borderRadius:3,borderSkipped:false}
+    ]},options:BOPTS(v=>Fs(v))});
+  }
+}
+
+function buildChTable(tab){
+  const isWEB=tab===3;
+  const ch=isWEB?D.web:D.tel;
+  const tb=document.getElementById(`tb${tab}`);
+  for(let i=0;i<12;i++){
+    const a=ch.fy24m[i]||0,b=ch.fy25m[i]||0,has=i<ch.fy25m.length;
+    const aq=ch.fy24q[i]||0,bq=ch.fy25q[i]||0;
+    const da=b-a,gr=a?(da/a*100).toFixed(1)+'%':'—';
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${D.fyL[i]}</td>
+      <td class="r">${a.toLocaleString()}</td>
+      <td class="r">${has?b.toLocaleString():'<span style="color:#94a3b8">—</span>'}</td>
+      <td class="r">${has?`<span class="db ${DC(da)}">${S(da)}${da.toLocaleString()}</span>`:'—'}</td>
+      <td class="r">${has?`<span class="db ${DC(da)}">${S(da)}${gr}</span>`:'—'}</td>
+      <td class="r">${aq.toLocaleString()}</td>
+      <td class="r">${has?bq.toLocaleString():'—'}</td>`;
+    tb.appendChild(tr);
+  }
+  // total
+  const ta=ch.fy24m.reduce((s,v)=>s+v,0),tb2=ch.fy25m.reduce((s,v)=>s+v,0);
+  const tda=tb2-ta;
+  const tr=document.createElement('tr');tr.className='tot';
+  tr.innerHTML=`<td>合計</td>
+    <td class="r">${ta.toLocaleString()}</td><td class="r">${tb2.toLocaleString()}</td>
+    <td class="r"><span class="db ${DC(tda)}">${S(tda)}${tda.toLocaleString()}</span></td>
+    <td class="r"><span class="db ${DC(tda)}">${(tda/ta*100).toFixed(1)}%</span></td>
+    <td class="r">${ch.fy24q.reduce((s,v)=>s+v,0).toLocaleString()}</td>
+    <td class="r">${ch.fy25q.reduce((s,v)=>s+v,0).toLocaleString()}</td>`;
+  tb.appendChild(tr);
+}
+
+/* ─── TAB 5: SKU ─────────────────────────── */
+function buildT5(){
+  const sN=D.sku.map(d=>d.n.length>10?d.n.slice(0,10)+'…':d.n);
+  mkChart('c5a',{type:'bar',data:{labels:sN,datasets:[
+    {label:'FY24',data:D.sku.map(d=>d.f4),backgroundColor:'rgba(99,102,241,.8)',borderRadius:3,borderSkipped:false},
+    {label:'FY25',data:D.sku.map(d=>d.f5),backgroundColor:'rgba(244,63,94,.8)',borderRadius:3,borderSkipped:false}
+  ]},options:BOPTS(v=>Fs(v))});
+  const t4=D.sku.reduce((s,d)=>s+d.f4,0),t5=D.sku.reduce((s,d)=>s+d.f5,0);
+  mkChart('c5b',{type:'doughnut',data:{labels:sN,datasets:[{data:D.sku.map(d=>d.f4),backgroundColor:SKU_C,borderColor:'#fff',borderWidth:1.5}]},options:DOPTS(t4)});
+  mkChart('c5c',{type:'doughnut',data:{labels:sN,datasets:[{data:D.sku.map(d=>d.f5),backgroundColor:SKU_C,borderColor:'#fff',borderWidth:1.5}]},options:DOPTS(t5)});
+  const tb=document.getElementById('tb5');
+  D.sku.forEach((d,i)=>{
+    const diff=d.f5-d.f4,gr=d.f4?(diff/d.f4*100).toFixed(1)+'%':d.f5?'FY25新規':'—';
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td style="font-family:'DM Mono',monospace;color:var(--muted)">${String(i+1).padStart(2,'0')}</td>
+      <td style="font-size:11px">${d.n}</td>
+      <td class="r">${d.t.toLocaleString()}</td>
+      <td class="r">${d.f4?d.f4.toLocaleString():'<span style="color:#94a3b8">—</span>'}</td>
+      <td class="r">${d.f5?d.f5.toLocaleString():'<span style="color:#94a3b8">—</span>'}</td>
+      <td class="r"><span class="db ${DC(diff)}">${S(diff)}${diff.toLocaleString()}</span></td>
+      <td class="r"><span class="db ${DC(diff)}">${d.f4?S(diff):''}${gr}</span></td>
+      <td class="r">${d.q.toLocaleString()}</td>
+      <td class="r">${Math.round(d.t/d.q).toLocaleString()}</td>`;
+    tb.appendChild(tr);
+  });
+}
+
+/* ─── TAB 6: KOL ─────────────────────────── */
+function buildT6(){
+  const sN=D.kol.map(d=>d.n);
+  mkChart('c6a',{type:'bar',data:{labels:sN,datasets:[
+    {label:'FY24',data:D.kol.map(d=>d.f4),backgroundColor:'rgba(99,102,241,.8)',borderRadius:3,borderSkipped:false},
+    {label:'FY25',data:D.kol.map(d=>d.f5),backgroundColor:'rgba(244,63,94,.8)',borderRadius:3,borderSkipped:false}
+  ]},options:BOPTS(v=>Fs(v))});
+  const top5n=D.kol.slice(0,5).map(d=>d.n);
+  const oth4=D.kol.slice(5).reduce((s,d)=>s+d.f4,0);
+  const oth5=D.kol.slice(5).reduce((s,d)=>s+d.f5,0);
+  mkChart('c6b',{type:'doughnut',data:{labels:[...top5n,'その他'],datasets:[{data:[...D.kol.slice(0,5).map(d=>d.f4),oth4],backgroundColor:KOL_C,borderColor:'#fff',borderWidth:1.5}]},options:DOPTS(D.kol24t)});
+  mkChart('c6c',{type:'doughnut',data:{labels:[...top5n,'その他'],datasets:[{data:[...D.kol.slice(0,5).map(d=>d.f5),oth5],backgroundColor:KOL_C,borderColor:'#fff',borderWidth:1.5}]},options:DOPTS(D.kol25t)});
+  const tb=document.getElementById('tb6');
+  D.kol.forEach((d,i)=>{
+    const diff=d.f5-d.f4,gr=d.f4?(diff/d.f4*100).toFixed(1)+'%':d.f5?'FY25新規':'FY25なし';
+    const p4=(d.f4/D.kol24t*100).toFixed(1),p5=(d.f5/D.kol25t*100).toFixed(1);
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td style="font-family:'DM Mono',monospace;color:var(--muted)">${String(i+1).padStart(2,'0')}</td>
+      <td style="font-size:11px">${d.n}</td>
+      <td class="r">${d.t.toLocaleString()}</td>
+      <td class="r">${d.f4?d.f4.toLocaleString():'<span style="color:#94a3b8">—</span>'}</td>
+      <td class="r">${d.f4?p4+'%':'—'}</td>
+      <td class="r">${d.f5?d.f5.toLocaleString():'<span style="color:#dc2626">0</span>'}</td>
+      <td class="r">${d.f5?p5+'%':'<span style="color:#dc2626">0%</span>'}</td>
+      <td class="r"><span class="db ${DC(diff)}">${S(diff)}${diff.toLocaleString()}</span></td>
+      <td class="r"><span class="db ${DC(diff)}">${S(diff>0&&!d.f4?0:0)}${gr}</span></td>`;
+    tb.appendChild(tr);
+  });
+}
+
+/* ─── INIT ───────────────────────────────── */
+window.addEventListener('DOMContentLoaded',()=>{
+  buildT0(); buildT0table();
+  buildT1(); buildT1table();
+  buildT2();
+  buildChTab(3); buildChTable(3);
+  buildChTab(4); buildChTable(4);
+  buildT5();
+  buildT6();
+});
+</script>
+</body>
+</html>
